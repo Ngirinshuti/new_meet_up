@@ -80,10 +80,11 @@
 .profileEditModal {
     position: fixed;
     inset: 0;
-    background-color: rgba(0,0,0,.3);
+    background-color: rgba(0,0,0,.5);
     display: flex;
     align-items: center;
     justify-content: center;
+    backdrop-filter: blur(4px);
     z-index: 100;
     flex-direction: column;
 }
@@ -99,6 +100,7 @@
     flex-direction: column;
     min-width: 250px;
     justify-content: space-between;
+    box-shadow: 0 0 10px 3px rgba(0, 0, 0, 0.4);
 }
 
 .profileEditModal .profilePhotoPlaceholder {
@@ -132,6 +134,7 @@
 .profilePhotoPlaceholder {
     position: relative;
 }
+
 .profilePhotoPlaceholder::before {
     content: "Choose to preview";
     white-space: nowrap;

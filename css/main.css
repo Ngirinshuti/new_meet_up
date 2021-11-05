@@ -44,6 +44,10 @@ a {
     display: inline-block;
 }
 
+h1, h2, h3, h4, h5, h6 {
+    text-transform: uppercase;
+}
+
 nav {
     display: flex;
     justify-content: center;
@@ -228,11 +232,16 @@ nav .navUserImage img {
         scale(var(--scale));
 }
 
-:is(button, .btn):hover::after {
+.hover {
+    position: relative;
+}
+
+:is(button, .btn, .hover):hover::after {
     content: "";
     background-color: rgba(20, 20, 20, 0.3);
     position: absolute;
     inset: 0;
+    border-radius: inherit;
 }
 
 :is(button, input, .btn):focus {
@@ -368,4 +377,9 @@ button::before {
         background: none !important;
         background-color: none !important;
     }
+}
+
+
+.btn-icon {
+    border-radius: 9999px;
 }

@@ -1,0 +1,117 @@
+
+.chatFriendsSearch input[type="search"] {
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--accent-bg);
+    padding-left: 2rem;
+}
+
+.chatFriendsSearch {
+    position: relative;
+}
+
+.chatFriendsSearch i {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+
+.chatFriendsContainer {
+    padding: 1rem;
+}
+
+.chatFriendsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.chatFriend {
+    align-items: center;
+    background: var(--main-bg);
+    box-shadow: 1px 2px 4px rgba(0, 0, 0, .5);
+    border: 2px solid var(--main-color);
+    padding: .5rem .5rem;
+    border-radius: 1rem;
+    display: flex;
+    gap: .5rem;
+    position: relative;
+    cursor: pointer;
+    transition: transform .3s ease;
+}
+
+.chatFriend:hover {
+    transform: scale(1.01);
+}
+
+.chatFriendUserName {
+    display: inline-block;
+    color: var(--main-color);
+    font-weight: 600;
+}
+
+.chatFriend:not(.selecting) .chatFriendSelect {
+    display: none;
+}
+
+.chatFriendSelect {
+    justify-self: flex-end;
+    position: absolute;
+    top: 50%;
+    right: .5rem;
+    transform: translateY(-50%);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.chatFriendSelect input[type="checkbox"] {
+    position: relative;
+    height: 20px;
+    width: 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    opacity: 0;
+}
+
+.chatFriendSelect label {
+    text-transform: uppercase;
+    margin-right: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* .chatFriendSelect input:checked ~ .fakeInput {
+
+} */
+
+.chatFriendSelect .fakeInput {
+    height: 30px;
+    width: 30px;
+    position: relative;
+    background-color: var(--accent-color);
+    border-radius: 50%;
+    transition: .3s;
+}
+
+.chatFriendSelect input:checked ~ .fakeInput::after {
+    width: 10px;
+    height: 10px;
+    transition: .3s;
+    content: "";
+    position: absolute;
+    background-color: white;
+    opacity: 1;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    border-radius: 50%;
+}
+
+
+
+
+
+
+

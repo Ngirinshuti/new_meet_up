@@ -31,7 +31,7 @@
             </div>
             <div class="postFooter">
                 <form action="<?php echo getUrl("/post/like_post.php"); ?>" method="post">
-                    <input type="hidden" name="back_url" value="<?php echo current_url(); ?>">
+                    <input type="hidden" name="back_url" value="<?php echo current_url_full(); ?>">
                     <input type="hidden" name="post_id" value="<?php echo $post->id; ?>">
                     <input type="hidden" name="username" value="<?php echo $me->username; ?>">
                     <button class="postLike likeBtn <?php echo boolval($post->likedBy($me->username)) ? "liked" : ""; ?> ">

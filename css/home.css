@@ -66,6 +66,8 @@
     height: 30px;
     border-radius: 50%;
     margin-right: 0.5rem;
+    object-fit: cover;
+    object-position: top;
 }
 .postTime {
     font-size: small;

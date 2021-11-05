@@ -51,7 +51,7 @@ function getSearchResults(search) {
                             "[data-nav-search-result-username]"
                         );
                         resultEl.href += "?user=" + user.username;
-                        nameEl.textContent = `${user.username} - ${user.fname} ${user.lname}`;
+                        nameEl.textContent = `${user.username} - ${user.fname} ${user.lname} ${user.email}`;
                         return resultEl;
                     })
                 );
