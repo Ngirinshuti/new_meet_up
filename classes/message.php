@@ -1,6 +1,6 @@
 <?php
 /*MESSAGE OPERATIONS*/
-class Message
+class OldMessage
 {
 	protected $conn;
 	protected $me;

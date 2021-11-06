@@ -1,19 +1,10 @@
 <?php
 
-require __DIR__ . '/../auth/User.php';
+require_once __DIR__ . '/../auth/User.php';
 
 interface MessageInterface
 {
-    public int    $id;
-    public string $body;
-    public string $status;
-    public string $sender;
-    public string $reciever;
-    public int    $story_id;
-    public string $created_at;
-    public int    $group_id;
-
-    
+   
     /**
      * Get a single message from db
      *
@@ -105,11 +96,9 @@ interface MessageInterface
 
 interface GroupInterface
 {
-    public int $id;
-    public string $name;
 
     /**
-     * Get a single group from db
+     * Gets a single group from db
      *
      * @param integer $group_id
      * @return Group|boolean
@@ -117,7 +106,7 @@ interface GroupInterface
     public static function findOne(int $group_id):Group|bool;
 
     /**
-     * Create a new group
+     * Creates a new group
      *
      * @param string $name
      * @return Group
@@ -125,7 +114,7 @@ interface GroupInterface
     public static function create(string $name): Group;
 
     /**
-     * Join user to a group
+     * Adds a user to a group
      *
      * @param string $username
      * @param integer $group_id
@@ -134,7 +123,7 @@ interface GroupInterface
     public function join(string $username, string $role = "member"): bool;
 
     /**
-     * Leave a group
+     * Removes a user from a group
      *
      * @param string $username
      * @param integer $group_id
@@ -144,7 +133,7 @@ interface GroupInterface
 
 
     /**
-     * Get group messages
+     * Gets group messages
      *
      * @param integer $group_id
      * @return array
@@ -152,11 +141,19 @@ interface GroupInterface
     public function  getMessages(): array;
 
     /**
-     * Get group members
+     * Gets group members
      *
      * @param integer $group_id
      * @return array
      */
     public function getMembers(): array;
+
+    /**
+     * Checks if a user is a group member
+     *
+     * @param string $username
+     * @return boolean
+     */
+    public function isMember(string $username): bool;
 }
 

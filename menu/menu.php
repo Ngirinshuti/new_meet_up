@@ -69,7 +69,7 @@ function getActive($url)
                     <a href="<?php echo getUrl("/friends/logout.php"); ?>">Logout</a>
                 </li>
                 <div class="themeContainer">
-                    <label for="theme-check">Darmode</label>
+                    <label for="theme-check">Light Mode</label>
                     <input type="checkbox" id="theme-check">
                     <div class="theme-scroll"></div>
                 </div>

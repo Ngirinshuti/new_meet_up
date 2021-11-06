@@ -1,18 +1,20 @@
 <?php
 
-require_once __DIR__ . '/./Chat.php';
-require_once __DIR__ . '/./Message.php';
+require_once __DIR__ . '/Chat.php';
+require_once __DIR__ . '/Message.php';
 
 
 class Group implements GroupInterface
 {
+    public int $id;
+    public string $name;
+
     public static function create(string $name): Group
     {
         $conn = DB::conn();
         $query = "INSERT INTO `groups` (`name`) VALUES(?)";
         $stmt = $conn->prepare($query);
         $stmt->execute([$name]);
-
 
         return Group::findOne($conn->lastInsertId("id"));
     }
@@ -76,4 +78,15 @@ class Group implements GroupInterface
 
         return $stmt->fetchAll();
     }
+
+
+    public function isMember(string $username): bool
+    {
+        $query = "SELECT * FROM `user_groups` WHERE `username` = ? AND `group_id` = ?";
+        $stmt = DB::conn()->prepare($query);
+        $stmt->execute([$username, $this->id]);
+        
+        return boolval($stmt->rowCount());
+    }
+
 }

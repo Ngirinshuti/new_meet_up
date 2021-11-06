@@ -14,7 +14,9 @@
     border-radius: 1rem;
     box-shadow: inset 2px 2px 3px rgba(0, 0, 0, .4), 4px 4px 3px rgba(0, 0, 0, .4);
     gap: 1rem;
+    scroll-behavior: smooth;
 }
+
 
 
 .chatMessageList::-webkit-scrollbar-track {
@@ -95,6 +97,11 @@
     border-radius: 1rem;
     font-size: 14px;
     max-width: 300px;
+    width: fit-content;
+}
+
+.chatMessageGroup.sent .chatMessageBody {
+    align-self: flex-end;
 }
 
 .chatMessage:first-of-type {
