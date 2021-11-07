@@ -2,11 +2,28 @@
 // logout file
 
 require_once __DIR__ . "/../classes/init.php";
+require_once __DIR__ . "/../forms/Validator.php";
 
-$me->setProperty("status", "offline");
+$validator = new Validator();
 
-Auth::logout();
+$validator->methodPost(function (Validator $validator) use ($me) {
+    $validator->validate();
 
-header("Location: $ROOT_URL/index.php");
+    $validator->isValid(function (Validator $validator) use ($me){
+        $me->setProperty("status", "offline");
+        $me->setProperty("last_seen", "CURRENT_TIMESTAMP()", raw: true);
+        Auth::logout();
+        $validator->redirect(getUrl("/"));
+    });
 
-exit("Logged out");
+    $validator->isInvalid(function (Validator $validator) {
+        $validator->setMainError("Invalid logout");
+        if (Session::has('url.last.full')){
+            $validator->redirect(Session::get('url.last.full'));
+        }
+        $validator->redirect(getUrl("/"));
+    });
+
+    // header("Location: $ROOT_URL/index.php");
+});
+

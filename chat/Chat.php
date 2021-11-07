@@ -111,7 +111,7 @@ interface GroupInterface
      * @param string $name
      * @return Group
      */
-    public static function create(string $name): Group;
+    public static function create(string $name, string $about): Group;
 
     /**
      * Adds a user to a group

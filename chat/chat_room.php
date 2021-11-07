@@ -1,20 +1,29 @@
 <?php
 
 require_once __DIR__ . '/../classes/init.php';
-
-if (!isset($_GET['user']) || !($user = User::findOne($_GET['user']))) {
-    header("Location: " . getUrl('/404.php?msg=You should select a user to chat with&url=' . getUrl('/chat/index.php')));
-}
-
-if ($user->username === $me->username) {
-    exit("Something! Went wrong.");
-}
-
+require_once __DIR__ . '/../classes/friend_system.php';
 require_once __DIR__ . '/Message.php';
+require_once __DIR__ . '/Group.php';
+require_once __DIR__ . '/../lib/createEmiji.php';
 
-$messages = Message::getConversation($me->username, $user->username);
 
-function shouldCombine(int $i){
+$user = isset($_GET['user']) ? User::findOne($_GET['user']) : null;
+$group = isset($_GET['group']) ? Group::findOne($_GET['group']) : null;
+
+if ($user) {
+    if ($user?->username === $me->username) {
+        exit("Something! Went wrong.");
+    }
+    $messages = Message::getConversation($me->username, $user->username);
+} elseif ($group) {
+    $messages = $group->getMessages();
+} else {
+    header("Location: " . getUrl('/404.php?msg=Something is wrong'));
+    exit;
+}
+
+function shouldCombine(int $i)
+{
     $messages = $GLOBALS['messages'];
     $date_obj = $GLOBALS['date_obj'];
 
@@ -26,15 +35,12 @@ function shouldCombine(int $i){
     if ($next === null) {
         return false;
     }
-
-    // if ($current->sender === $next->sender && $date_obj->dateDiff($next->created_at, $current->created_at) < 1) {
-    //     return true;
-    // }
-
     if ($current->sender === $next->sender && $date_obj->underAMinute($next->created_at, $current->created_at)) {
         return true;
     }
 }
+
+$active_count = (new Friends($db_connection, $me->username))->activeFriendsCount();
 
 ?>
 
@@ -50,7 +56,7 @@ function shouldCombine(int $i){
     <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="../css/chat.css">
     <link rel="stylesheet" href="../css/chat-room.css">
-    <title>Chat - <?php echo $user->username; ?></title>
+    <title>Chat - <?php echo $user?->username . $group?->name; ?></title>
 </head>
 
 <body>
@@ -59,18 +65,18 @@ function shouldCombine(int $i){
         <div class="chatContainer">
             <header class="chatHeader">
                 <a href="<?php echo getUrl("/chat/index.php") ?>" class="btn btn-icon"><i class="fa fa fa-arrow-circle-left"></i></a>
-                <h5 class="title"><?php echo $user->fname . " " . $user->lname; ?></h5>
+                <h5 class="title"><?php echo $user?->username . $group?->name; ?></h5>
                 <div class="headerBtns">
-                    <a href="<?php echo getUrl("/chat/chat_friends.php"); ?>" class="btn">Friends</a>
+                    <a href="<?php echo getUrl("/chat/chat_friends.php"); ?>" class="btn">Active (<?php echo $active_count; ?>)</a>
                 </div>
             </header>
             <div class="chatRoomContainer">
                 <?php if (empty($messages)) : ?>
-                    <p style="text-align: center;">You have no chat yet.</p>
+                    <p class="centered" style="text-align: center;">You have no chat yet.</p>
                 <?php endif; ?>
                 <div class="chatMessageList">
                     <?php foreach ($messages as $i => $msg) : ?>
-                        <?php if ($i === 0 || !shouldCombine($i-1)) : ?>
+                        <?php if ($i === 0 || !shouldCombine($i - 1)) : ?>
                             <div class="chatMessageGroup <?php echo $msg->sender === $me->username ? "sent" : "recieved"; ?>">
                                 <div class="chatMessageUser">
                                     <div class="chatUserImg">
@@ -93,13 +99,30 @@ function shouldCombine(int $i){
                     <?php endforeach; ?>
                 </div>
                 <div class="chatRoomInput">
-                    <textarea data-chat-input placeholder="Message.." autofocus></textarea>
+                    <textarea data-emojiable="true" data-emoji-input="unicode" data-chat-friend="<?php echo $user?->username; ?>" data-me="<?php echo $me->username; ?>" data-last-message-sender="<?php echo (end($messages) ?: null)?->sender; ?>" data-last-message-date="<?php echo (end($messages) ?: null)?->created_at ?>" data-csrf-key="<?php echo $my_csrf->get_token_id() ?>" data-csrf-token="<?php echo $my_csrf->get_token() ?>" data-group-id="<?php echo $group?->id; ?>" data-reciever="<?php echo $user?->username; ?>" data-chat-input placeholder="Message.." autofocus></textarea>
                     <button data-chat-send class="btn-icon"><i class="fa fa-send"></i></button>
                 </div>
             </div>
         </div>
     </div>
     </div>
+
+    <template data-message-template>
+        <!-- <div class="chatMessageGroup"> -->
+        <div class="chatMessageUser">
+            <div class="chatUserImg">
+                <img src="<?php echo getUrl("/images/") ?>" alt="profile">
+            </div>
+        </div>
+        <div class="chatMessage">
+            <div class="chatMessageBody"></div>
+        </div>
+        <div class="chatMessageInfo">
+            <div class="chatMessageTime"></div>
+            <div class="chatStatus"></div>
+        </div>
+        <!-- </div> -->
+    </template>
     <script src="<?php echo getUrl("/js/chat_room.js") ?>" defer></script>
 </body>
 

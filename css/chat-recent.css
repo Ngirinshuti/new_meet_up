@@ -45,6 +45,7 @@
 
 .recentChatMessage {
     font-size: small;
+    word-break: break-all;
     /* color: ; */
 }
 

@@ -311,7 +311,10 @@ class Validator
             if ($csrf->check_valid('post')) {
                 $callback($this);
             } else {
+                $this->setMainError("Invalid csrf token!");
+                // $this->saveMainError();
                 exit("Invalid csrf token!");
+                // $this->redirect(getBackUrl());
             }
         }
     }
@@ -482,8 +485,9 @@ class Validator
         $errors = fn ($name) => $this->printErrors($name);
         $data = fn ($name) => $this->data($name);
         $errorClass = fn ($name) => $this->hasError($name) ? "error" : "";
-        $mainError = fn () => $this->getMainError() ? <<<ST
-        <div class="formError">{$this->getMainError()}</div>
+        $error = $this->getMainError();
+        $mainError = fn () => $error ? <<<ST
+        <div class="formError">$error</div>
         ST : "";
         $success_msg = function () {
             $msg = $this->getSuccessMsg() ? $this->getSuccessMsg() : (Session::see("forms.success.msg", ""));

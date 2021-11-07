@@ -13,7 +13,7 @@ class Message  implements MessageInterface
     public string $body;
     public string $status;
     public string $sender;
-    public string $reciever;
+    public ?string $reciever;
     public ?int    $story_id;
     public string $created_at;
     public ?int    $group_id;
@@ -21,10 +21,10 @@ class Message  implements MessageInterface
 
     public static function create(
         string $sender,
-        string $reciever,
         string $body,
-        ?int $story_id,
-        ?int $group_id
+        ?string $reciever = null,
+        ?int $story_id = null,
+        ?int $group_id = null
     ): Message|bool {
         $conn = DB::conn();
         $query = "INSERT INTO `messages` 
@@ -49,7 +49,9 @@ class Message  implements MessageInterface
 
     public static function findOne(int $id): Message|bool
     {
-        $query = "SELECT * FROM `messages` WHERE `id` = ?";
+        $query = "SELECT `users`.profile_pic, messages.* FROM `messages` 
+        JOIN users ON users.username = messages.sender
+        WHERE `id` = ?";
         $stmt = DB::conn()->prepare($query);
         $stmt->execute([$id]);
 
@@ -161,5 +163,61 @@ class Message  implements MessageInterface
         $stmt = DB::conn()->prepare($query);
         $stmt->execute([$status, $id]);
         return Message::findOne($id);
+    }
+
+    /**
+     * Gets group conversation
+     *
+     * @param integer $group_id
+     * @return array
+     */
+    public static function getGroupMessages(int $group_id): array
+    {
+        $query = "SELECT `users`.`profile_pic`, messages.* FROM messages
+        JOIN `users` ON `users`.username = `messages`.sender WHERE `messages`.group_id = ?";
+        $stmt = DB::conn()->prepare($query);
+        $stmt->setFetchMode(PDO::FETCH_CLASS, Message::class);
+        $stmt->execute([$group_id]);
+        return $stmt->fetchAll();
+    }
+
+
+    /**
+     * Gets latest user messages
+     *
+     * @param string $reciever
+     * @param string $lastMessageDate
+     * @return array
+     */
+    public static function checkNewMesssages(
+        string $reciever,
+        string $lastMessageDate,
+        string $sender = null,
+        string $group_id = null
+    ): array {
+        $query = "SELECT `users`.`profile_pic`, messages.* FROM messages
+        JOIN `users` ON `users`.username = `messages`.sender 
+
+        WHERE messages.`created_at` > :latest_date AND (
+            messages.reciever = :reciever 
+            OR 
+            (:group_id IN (
+                SELECT user_groups.`group_id` FROM  `user_groups` WHERE user_groups.group_id = messages.group_id
+            ))  
+        ) AND (
+            messages.sender = :sender OR messages.group_id = :group_id
+        )
+        ";
+
+        $stmt = DB::conn()->prepare($query);
+        $stmt->setFetchMode(PDO::FETCH_CLASS, Message::class);
+        $stmt->execute([
+            ":reciever" => $reciever, 
+            ":latest_date" => $lastMessageDate,
+            ":group_id" => $group_id,
+            ":sender" => $sender
+        ]);
+
+        return $stmt->fetchAll();
     }
 }

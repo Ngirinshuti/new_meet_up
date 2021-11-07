@@ -28,15 +28,15 @@ class Dates
 		$diff = $this->now - strtotime($date);
 		if ($diff < 60) {
 			if ($diff >= 0) {
-				return "now"; //($diff == 1 || $diff == 0)? "1 sec" : $diff . "s";
+				return ($diff == 1 || $diff == 0)? "1 sec" : $diff . " secs";
 			} else {
 				if ($diff > -60) {
-					return " next " . $diff . "sec";
+					return " next " . $diff . " sec";
 				} elseif ($diff <= -60 && $diff > -3600) {
-					return " next " . round($diff / -60) . "min";
+					return " next " . round($diff / -60) . " min";
 				} elseif ($diff <= -3600 && $diff > -86400) {
 					// $hours = date_format(date_create($date), "H:i");
-					return " next " . round($diff / -3600) . "hr";
+					return " next " . round($diff / -3600) . " hr";
 				} elseif ($diff <= -86400 && $diff > (-86400 * 7)) {
 					if (round($diff / -86400) == 1) {
 						return "Tommorow " . date("G:i", strtotime($date));
@@ -54,10 +54,10 @@ class Dates
 				}
 			}
 		} elseif ($diff >= 60 && $diff < 3600) {
-			return round($diff / 60) . "min";
+			return round($diff / 60) . (round($diff / 60) > 1 ? " mins" : " min");
 		} elseif ($diff >= 3600 && $diff < 86400) {
 			// $hours = date_format(date_create($date), "H:i");
-			return (round($diff / 3600) > 1) ? round($diff / 3600) . "hrs" : "1hr";
+			return (round($diff / 3600) > 1) ? round($diff / 3600) . " hrs" : "1 hr";
 		} elseif ($diff >= 86400 && $diff < (86400 * 7)) {
 			if (round($diff / 86400) == 1) {
 				return "Yesterday " . date("G:i", strtotime($date));

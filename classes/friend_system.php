@@ -46,6 +46,40 @@ class Friends
         }
     }
 
+    public function getFriendsSorted(): array
+    {
+        $query = "SELECT `users`.* FROM friends
+        JOIN users ON IF(friends.partener = :me, friends.friend, friends.partener) = users.username
+        WHERE :me IN (friends.partener, friends.friend)
+        ORDER BY `users`.`status` DESC
+        ";
+
+        $stmt = DB::conn()->prepare($query);
+        $stmt->setFetchMode(PDO::FETCH_CLASS, User::class);
+        $stmt->execute([":me" => $this->me]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get all active friends count
+     *
+     * @return integer
+     */
+    function activeFriendsCount(): int
+    {
+        $query = "SELECT COUNT(`friends`.partener) as active_count FROM friends 
+        JOIN users ON IF(friends.partener = :me, friends.friend, friends.partener) = users.username
+        WHERE :me IN (friends.partener, friends.friend)
+        AND `users`.status = 'online'
+        ";
+
+        $stmt = DB::conn()->prepare($query);
+        $stmt->execute([":me" => $this->me]);
+
+        return $stmt->fetch()['active_count'];
+    }
+
     function request_sent($user)
     {
         try {
@@ -65,7 +99,7 @@ class Friends
         }
     }
 
-    function get_sent_requests():array
+    function get_sent_requests(): array
     {
         $sql  = "SELECT users.* FROM friendrequest 
         JOIN users ON friendrequest.reciever = users.username 
@@ -125,7 +159,8 @@ class Friends
         }
     }
 
-    function delete_friend_request($reciever):bool {
+    function delete_friend_request($reciever): bool
+    {
         $query = "DELETE FROM `friendrequest` WHERE `sender` = :me AND `reciever` = :user";
         $stmt = $this->db->prepare($query);
         $stmt->execute([":me" => $this->me, ":user" => $reciever]);
@@ -229,7 +264,7 @@ class Friends
         $we_are_friends = <<<QE
         (`friends`.`partener` = :me OR `friends`.`friend` = :me)
         QE;
-        
+
         $they_are_friends = <<<QE
         (`friends`.`friend` = :user OR `friends`.`partener` = :user)
         QE;
@@ -242,14 +277,14 @@ class Friends
             END
         ) = `users`.username
         WHERE $we_are_friends AND $they_are_friends";
-        
+
         $stmt = $this->db->prepare($query);
         $stmt->execute([":me" => $this->me, ":user" => $this->user]);
 
         if ($get_num) {
             return $stmt->rowCount();
         }
-        
+
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 }

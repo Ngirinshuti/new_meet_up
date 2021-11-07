@@ -15,13 +15,14 @@ $user_obj       = new OldUser($db_connection, $me->username);
 $msg_obj        = new OldMessage($db_connection, $me->username);
 $date_obj       = new Dates();
 
-$users          = $user_obj->get_all_users(true);
-$users_num      = $user_obj->get_all_users(false);
+// $users          = $user_obj->get_all_users(true);
+// $users_num      = $user_obj->get_all_users(false);
 $unread         = $msg_obj->get_all_unread();
 
 Session::clearSeen();
 
 if (Session::has("url.current")) {
+    // if (Session::has('url.last'))
     Session::set("url.last", Session::get('url.current'));
     Session::set("url.last.full", Session::get('url.current.full'));
 } 
@@ -29,4 +30,27 @@ if (Session::has("url.current")) {
 Session::set("url.current", current_url());
 Session::set("url.current.full", current_url_full());
 
+function back() {
+    if (Session::has('url.last.full')){
+        header("Location: " . Session::get('url.last.full'));
+        exit;
+    }
 
+    header("Location: ". getUrl('/'));
+    exit;
+}
+
+
+function getBackUrl():string
+{
+    if (Session::has('url.last.full')) {
+        return Session::get('url.last.full');
+    }
+    return getUrl("/");
+}
+
+
+function me():User
+{
+    return $GLOBALS["me"];
+}

@@ -1,8 +1,8 @@
 
-.chatFriendsSearch input[type="search"] {
-    background-color: var(--secondary-bg);
-    border: 1px solid var(--accent-bg);
-    padding-left: 2rem;
+.chatFriendsSearch input[data-friends-search-input] {
+    background-color: var(--secondary-bg)!important;
+    border: 1px solid var(--accent-bg)!important;
+    padding-left: 2rem!important;
 }
 
 .chatFriendsSearch {
@@ -22,9 +22,17 @@
 }
 
 .chatFriendsList {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    place-items: center;
+    grid-template-columns: 1fr 1fr;
+    align-content: center;
+    justify-items: center;
     gap: 0.5rem;
+}
+
+.chatFriend:only-of-type {
+    grid-column-start: 1;
+    grid-column-end: 2;
 }
 
 .chatFriend {
@@ -36,9 +44,50 @@
     border-radius: 1rem;
     display: flex;
     gap: .5rem;
+    width: 100%;
     position: relative;
     cursor: pointer;
     transition: transform .3s ease;
+}
+
+.chatFriend.active{
+    border-color: var(--green);
+}
+
+.chatFriend.active::after {
+    position: absolute;
+    content: "";
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: var(--green);
+    z-index: 10;
+    left: 0;
+    top: 0;
+}
+
+.chatFriendLastSeen {
+    font-weight: 500;
+    font-size: small;
+    justify-self: flex-end;
+    text-align: right;
+    width: max-content;
+    max-width: 100%;
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding-top: 0.25rem;
+    padding-right: 0.5rem;
+    /* align-self: flex-end; */
+}
+.chatFriendLastSeen + .chatFriendSelect {
+    margin-top: 0.25rem;
+}
+
+.chatFriend:not(.selecting) .chatFriendLastSeen {
+    top: 50%;
+    padding-top: 0;
+    transform: translateY(-50%);
 }
 
 .chatFriend:hover {
@@ -72,7 +121,6 @@
     width: 20px;
     border-radius: 10px;
     cursor: pointer;
-    opacity: 0;
 }
 
 .chatFriendSelect label {
@@ -80,11 +128,8 @@
     margin-right: 0.5rem;
     cursor: pointer;
     font-weight: 600;
+    display: none;
 }
-
-/* .chatFriendSelect input:checked ~ .fakeInput {
-
-} */
 
 .chatFriendSelect .fakeInput {
     height: 30px;
@@ -112,6 +157,38 @@
 
 
 
+/* form */
+
+.groupFormContainer {
+    display: block!important;    
+    min-height: auto!important;
+}
+
+.mainForm.groupForm .formBody{
+    display: flex;   
+    gap: 1rem;
+    align-items: center;
+    margin: 0;
+    max-width: max-content;
+}
+
+.mainForm.groupForm .headerText{
+    font-weight: 500;
+    color: var(--accent-bg);
+    text-shadow: 2px 2px 10px var(--accent-color);
+    margin-bottom: 2rem!important;
+}
 
 
+.mainForm.groupForm {
+    margin: .5rem 0!important;
+    width: 100%!important;
+    max-width: 100%;
+}
 
+.mainForm.groupForm .formBody button{
+    margin: 0;
+    margin-bottom: 0!important;
+    margin-top: .75rem;
+    max-width: max-content;
+}

@@ -1,5 +1,12 @@
 <?php
 
+
+require_once __DIR__ . '/../token.php';
+$my_csrf = new csrf();
+
+$token_key = $my_csrf->get_token_id();
+$token_value = $my_csrf->get_token();
+
 function getActive($url)
 {
     $found = strpos($_SERVER['REQUEST_URI'], $url);
@@ -12,17 +19,19 @@ function getActive($url)
     <meta charset="utf-8">
     <link rel="stylesheet" href="<?php echo getUrl("/css/font-awesome-4.5.0/css/font-awesome.min.css") ?>">
     <link rel="stylesheet" href="<?php echo getUrl("/css/main.css") ?>">
-    <script src="../js/theme.js" defer></script>
-    <script src="../js/search.js" defer></script>
+    <script src="<?php echo getUrl("/js/theme.js") ?>" defer></script>
+    <script src="<?php echo getUrl("/js/search_user.js") ?>" defer></script>
 </head>
 
 <nav>
     <header>
         <a href="<?php echo $ROOT_URL; ?>" class="navLogo">MU</a>
         <div class="navSearch">
-            <input data-nav-search-input type="search" placeholder="search" />
+            <!-- <div class="navSearchInputContainer">
+                <div class="navSearchIcon"><i class="fa fa-search"></i></div> -->
+                <input data-nav-search-input type="search" placeholder="search" />
+            <!-- </div> -->
             <div data-nav-search-result-container class="navSearchResultContainer">
-                <!-- <h3 class="navSearchResultHeader">Results: </h3> -->
                 <div data-nav-search-result-list class="navSearchResultList">
                     <p>Search results goes here</p>
                     <!-- SEARCH RESULT TEMPLATE USED IN JAVASCRIPT -->
@@ -30,7 +39,7 @@ function getActive($url)
                         <a href="<?php echo getUrl("/friends/profile.php"); ?>" data-nav-search-result class="navSearchResult">
                             <div class="navSearchResultUser">
                                 <div class="navSearchResultUserImg">
-                                    <img src="<?php echo getUrl("/images/default.png") ?>" alt="img"/>
+                                    <img src="<?php echo getUrl("/images/default.png") ?>" alt="img" />
                                 </div>
                                 <div data-nav-search-result-username class="navSearchResultUserName">
                                     Ishimwe Valentin - valentin
@@ -66,7 +75,10 @@ function getActive($url)
             <a href="#"> <i class="fa fa-cog fa-fw"></i> <span></span></a>
             <ul class="subNav">
                 <li>
-                    <a href="<?php echo getUrl("/friends/logout.php"); ?>">Logout</a>
+                    <form action="<?php echo getUrl("/friends/logout.php"); ?>" method="post">
+                    <input type="hidden" name="<?php echo $token_key; ?>" value="<?php echo $token_value; ?>">
+                    <button style="width: 100%;"><i class="fa fa-arrow-right" style="margin-right: 10px;"></i> Logout</button>
+                </form>
                 </li>
                 <div class="themeContainer">
                     <label for="theme-check">Light Mode</label>

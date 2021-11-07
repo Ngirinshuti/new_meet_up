@@ -17,6 +17,7 @@
     border: 2px solid var(--accent-bg);
     width: 46px;
     height: 46px;
+    flex-shrink: 0;
     border-radius: 50%;
 }
 

@@ -26,6 +26,7 @@ class User
     public string $code;
     public bool $verified;
     public string $remember_me;
+    public ?string $last_seen;
 
 
     /**
@@ -154,11 +155,19 @@ class User
      *
      * @param string $property the column name
      * @param mixed  $value    column new value
+     * @param bool  $raw  insert as raw value
      * 
      * @return bool
      */
-    public function setProperty(string $property, mixed $value): bool
+    public function setProperty(string $property, mixed $value, $raw = false): bool
     {
+        if ($raw) {
+            return boolval(
+                DB::conn()->query("UPDATE `users` SET `$property` = $value  WHERE `username` = '{$this->username}'")?->rowCount()
+            );
+        }
+
+
         $query = "UPDATE `users` SET `$property`= ? WHERE `username` = ?";
         $stmt = DB::conn()->prepare($query);
         $stmt->execute([$value, $this->username]);
@@ -227,7 +236,7 @@ class User
         $stmt->setFetchMode(PDO::FETCH_CLASS, __CLASS__);
         return $stmt->fetchAll();
     }
-    
+
     /**
      * Get user by password reset token
      *
@@ -235,7 +244,7 @@ class User
      * 
      * @return User|boolean
      */
-    public static function getByResetToken(string $token):User|bool
+    public static function getByResetToken(string $token): User|bool
     {
         $query = "SELECT `users`.* 
         FROM `pwdreset`
@@ -253,7 +262,7 @@ class User
      *
      * @return string
      */
-    function createResetToken():string 
+    function createResetToken(): string
     {
         $token = bin2hex(random_bytes(32));
         $query = "INSERT INTO `pwdreset` (`email`, `token`) 
@@ -279,7 +288,7 @@ class User
      * @param string $new_pass
      * @return void
      */
-    public function changePassword( string $new_pass)
+    public function changePassword(string $new_pass)
     {
         $hash = password_hash($new_pass, PASSWORD_DEFAULT);
         return $this->setProperty("password", $hash);
@@ -291,7 +300,7 @@ class User
      * @param array $properties
      * @return User
      */
-    public function updateProperties(array $properties):User
+    public function updateProperties(array $properties): User
     {
         $cols = implode("= ?, ", array_keys($properties)) . " = ?";
         $values = array_values($properties);
@@ -299,8 +308,7 @@ class User
         $query = "UPDATE `users` SET $cols WHERE `username` = ?";
         $stmt = DB::conn()->prepare($query);
         $stmt->execute([...$values, $this->username]);
-        
+
         return self::findOne($this->username);
     }
-
 }

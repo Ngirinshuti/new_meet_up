@@ -43,24 +43,27 @@ $recent_messages = Message::getUserRecentMessages($me->username);
                             <div class="recentChatBody">
                                 <a href="#" class="recentChatUserName"><?php echo "{$msg->from} - {$msg->to}"; ?></a>
                                 <div class="recentChatMessage">
-                                    <?php echo $msg->body; ?>
+                                    <?php echo substr($msg->body, 0, 40) . (strlen($msg->body) > 40? "..." : ""); ?>
                                 </div>
                                 <div class="recentChatTime"><?php echo $date_obj->dateDiffStr($msg->created_at); ?></div>
                             </div>
                             <a class="recentChatLink" href="<?php echo getUrl("/chat/chat_room.php?user=" . ($msg->reciever === $me->username ? $msg->sender : $msg->reciever)) ?>"></a>
                         </div>
                     <?php endforeach ?>
-                    <!-- <div data-unread-count="2" class="recentChat unread">
-                        <div class="chatUserImg">
-                            <img src="../images/default.png" alt="profile">
-                        </div>
-                        <div class="recentChatBody">
-                            <a href="#" class="recentChatUserName">John Doe</a>
-                            <div class="recentChatMessage">Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                    <template>
+
+                        <div data-unread-count="2" class="recentChat unread">
+                            <div class="chatUserImg">
+                                <img src="../images/default.png" alt="profile">
                             </div>
-                            <div class="recentChatTime">2 hrs</div>
+                            <div class="recentChatBody">
+                                <a href="#" class="recentChatUserName">John Doe</a>
+                                <div class="recentChatMessage">Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                                </div>
+                                <div class="recentChatTime">2 hrs</div>
+                            </div>
                         </div>
-                    </div> -->
+                    </template>
                 </div>
             </div>
         </div>

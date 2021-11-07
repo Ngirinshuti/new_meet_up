@@ -8,13 +8,14 @@ class Group implements GroupInterface
 {
     public int $id;
     public string $name;
+    public string $about;
 
-    public static function create(string $name): Group
+    public static function create(string $name, string $about = ""): Group
     {
         $conn = DB::conn();
-        $query = "INSERT INTO `groups` (`name`) VALUES(?)";
+        $query = "INSERT INTO `groups` (`name`,`about`) VALUES(?, ?)";
         $stmt = $conn->prepare($query);
-        $stmt->execute([$name]);
+        $stmt->execute([$name, $about]);
 
         return Group::findOne($conn->lastInsertId("id"));
     }
@@ -54,9 +55,11 @@ class Group implements GroupInterface
 
     public function getMessages(): array
     {
-        $query = "SELECT * FROM 
-        `messages` WHERE `group_id` = ?
-        ORDER BY `created_at` DESC
+        $query = "SELECT users.profile_pic, messages.* FROM 
+        `messages` 
+        JOIN users ON users.username = messages.sender
+        WHERE `group_id` = ?
+        ORDER BY `created_at` ASC
         ";
 
         $stmt = DB::conn()->prepare($query);
@@ -68,9 +71,10 @@ class Group implements GroupInterface
 
     public function getMembers(): array
     {
-        $query = "SELECT `users`.* FROM `user_groups`
+        $query = "SELECT `users`.*, user_groups.role FROM `user_groups`
         JOIN `users` ON `users`.`username` = `user_groups`.`username`
         WHERE `group_id` = ?
+        ORDER BY user_groups.role ASC
         ";
         $stmt = DB::conn()->prepare($query);
         $stmt->setFetchMode(PDO::FETCH_CLASS, User::class);
@@ -87,6 +91,26 @@ class Group implements GroupInterface
         $stmt->execute([$username, $this->id]);
         
         return boolval($stmt->rowCount());
+    }
+
+    /**
+     * Gets a user groups
+     *
+     * @param string $username
+     * @return array
+     */
+    public static function getUserGroups(string $username):array
+    {
+        $query = "SELECT groups.* FROM `user_groups`
+        JOIN `groups` ON `groups`.`id` = `user_groups`.`group_id`
+        WHERE `user_groups`.`username` = ?
+        ";
+
+        $stmt = DB::conn()->prepare($query);
+        $stmt->setFetchMode(PDO::FETCH_CLASS, Group::class);
+        $stmt->execute([$username]);
+
+        return $stmt->fetchAll();
     }
 
 }

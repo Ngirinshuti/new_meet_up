@@ -9,7 +9,8 @@
     padding: 1rem;
     align-items: flex-start;
     background-color: var(--secondary-bg);
-    height: 70vh;
+    height: 60vh;
+    /* min-height: 50vh; */
     overflow-y: auto;
     border-radius: 1rem;
     box-shadow: inset 2px 2px 3px rgba(0, 0, 0, .4), 4px 4px 3px rgba(0, 0, 0, .4);
@@ -92,7 +93,6 @@
 .chatMessageBody {
     word-break: break-all;
     background-color: var(--accent-color-opacity);
-    color: white;
     padding: .75rem 1.25rem;
     border-radius: 1rem;
     font-size: 14px;
@@ -100,14 +100,19 @@
     width: fit-content;
 }
 
-.chatMessageGroup.sent .chatMessageBody {
-    align-self: flex-end;
+.chatMessageGroup.recieved {
+    color: white;
 }
 
-.chatMessage:first-of-type {
+.chatMessageGroup.sent .chatMessageBody {
+    align-self: flex-end;
+    color: var(--white);
+}
+
+/* .chatMessage:first-of-type {
     border-bottom-right-radius: 0;
     background-color: red!important;
-}
+} */
 
 .chatMessageInfo {
     /* display: none; */
@@ -136,7 +141,7 @@
     gap: .5rem;
 }
 
-.chatRoomInput > textarea[data-chat-input] {
+.chatRoomInput > :is(textarea[data-chat-input], .emoji-wysiwyg-editor) {
     border: 1px solid var(--white);
     background-color: var(--secondary-bg);
     color: var(--white);
@@ -145,17 +150,33 @@
     font-size: 1.25rem;
 }
 
-
-.chatRoomInput > textarea[data-chat-input]:focus {
+.chatRoomInput > :is(textarea[data-chat-input], .emoji-wysiwyg-editor):focus {
     box-shadow: 0 0 3px 3px var(--accent-color-opacity);
 }
 
 .chatRoomInput button {
     position: absolute;
     right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 0;
+    /* transform: translateY(-50%); */
     border: 1px solid var(--white);
 }
 
+.chatRoomInput {
+    position: relative;
+    height: max-content;
+}
+
+.chatRoomInput .emoji-wysiwyg-editor {
+    background-color: var(--secondary-bg);
+    height: auto!important;
+    min-height: 76px;
+}
+
+.chatRoomInput .emoji-picker-icon {
+    position: absolute;
+    top: 100%;
+    transform: translate(-45%, calc(-100% - 5px));
+    right: 0;
+}
 

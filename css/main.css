@@ -295,6 +295,20 @@ button::before {
 
 /* nav search */
 
+.navSearch .navSearchIcon {
+    position: absolute;
+    left: .5rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.navSearchInputContainer {
+    position: relative;
+}
+.navSearchInputContainer input {
+    padding-left: 2rem!important;
+}
+
 .navSearchResultContainer:focus,
 .navSearchResultContainer:hover,
 :is(.navSearch.focused, .navSearch input:focus) .navSearchResultContainer,
@@ -383,4 +397,11 @@ button::before {
 
 .btn-icon {
     border-radius: 9999px;
+}
+
+.centered {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
