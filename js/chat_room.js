@@ -1,15 +1,18 @@
-window.addEventListener("DOMContentLoaded", (e) => {
-  // intial scrolling
 
+// Wait until DOM content are loaded
+
+window.addEventListener("DOMContentLoaded", (e) => {
+
+  // select the messages container element
   const chatsListContainer = document.querySelector(".chatMessageList");
-  setTimeout(() => {
-    chatsListContainer.scrollTo({
-      top: chatsListContainer.scrollHeight,
-      behavior: "smooth",
-    });
-    // .querySelector(".chatMessageGroup:last-of-type")
-    // .scrollIntoView(false);
-  }, 0);
+
+  // smoothly scroll the messages container to the bottom, so that we can see the new messages
+  chatsListContainer.scrollTo({
+    top: chatsListContainer.scrollHeight,
+    behavior: "smooth",
+  });
+
+  // also scroll the body to the bottom to see everything
   document.body.scrollIntoView(false);
 
   // select the message input element
@@ -221,10 +224,9 @@ window.addEventListener("DOMContentLoaded", (e) => {
   setInterval(check_new_messages, 3000);
 });
 
-
 /**
  * Checks whether two dates has less than a minute differance
- * 
+ *
  * @param {string} date1 the first date
  * @param {string} date2 another date
  * @returns boolean
@@ -239,10 +241,9 @@ function lessThanMinute(date1, date2) {
   return false;
 }
 
-
 /**
  * Legacy function that formats a date into a more human readable form
- * 
+ *
  * @param {string} date date to format
  * @returns string formated date
  */
