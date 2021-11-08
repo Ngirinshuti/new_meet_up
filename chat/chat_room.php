@@ -72,7 +72,7 @@ $active_count = (new Friends($db_connection, $me->username))->activeFriendsCount
             </header>
             <div class="chatRoomContainer">
                 <?php if (empty($messages)) : ?>
-                    <p class="centered" style="text-align: center;">You have no chat yet.</p>
+                    <p data-no-messages class="centered" style="text-align: center;">You have no chat yet.</p>
                 <?php endif; ?>
                 <div class="chatMessageList">
                     <?php foreach ($messages as $i => $msg) : ?>

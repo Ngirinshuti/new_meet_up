@@ -12,55 +12,78 @@ window.addEventListener("DOMContentLoaded", (e) => {
   }, 0);
   document.body.scrollIntoView(false);
 
-  // send a message
+  // select the message input element
   const messageInput = document.querySelector("[data-chat-input]");
+
+  // select the message editor element created by emoji library
   const messageEditor = messageInput.nextElementSibling;
+
+  // select message send button
   const sendButton = document.querySelector("[data-chat-send]");
 
-  // send pressing ENTER
+  // send pressing ENTER in the message input element
   messageInput.addEventListener("keyup", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       sendMessage(messageInput.value);
     }
   });
-  // send pressing ENTER
+
+  // send pressing ENTER in the editor element created by emoji library
   messageEditor.addEventListener("keyup", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
+      // make message input's value similar to the text contet of the
+      // editor element created by emoji library
       messageInput.value = messageEditor.textContent;
-      sendMessage(() => {
-        messageEditor.textContent = "";
-      });
+      sendMessage();
+      // clear editor by emoji library
+      messageEditor.textContent = "";
     }
   });
-  // send using a button
+
+  // send by clicking send button
   sendButton.addEventListener("click", (e) => sendMessage(messageInput.value));
 
-  function sendMessage(callback) {
+  /**
+   * Sends a message
+   *
+   * @param {function} callback callback function
+   * @returns void
+   */
+  function sendMessage(callback = null) {
+    // get a value from message input element
     const msg = messageInput.value;
 
+    // check if the value isn't empty
     if (msg.trim() === "") {
       return showMsg("Empty message!");
     }
 
+    // get a message reciever if any
     const reciever = messageInput.dataset.reciever;
+    // get a current group id if any
     const groupId = messageInput.dataset.groupId;
+    // get a csrf token key
     const csrfKey = messageInput.dataset.csrfKey;
+    // get a csrf token value
     const csrfToken = messageInput.dataset.csrfToken;
 
+    // initialze new formdata object
     const body = new FormData();
 
+    // add all necessary request body to the formdata
     body.append(csrfKey, csrfToken);
     body.append("reciever", reciever);
     body.append("group_id", groupId);
     body.append("message", msg);
 
-    request("../chat/send_message.php", body).then((data) => {
-      // console.log({ data });
-      addMessage(data);
-      callback && callback();
-      // window.location.reload();
+    // make send message request to the corresponding url
+    request("../chat/send_message.php", body).then((msg) => {
+      // You should recieve the newly created message and display it
+      addMessage(msg);
+      // call the callback function if any was provided
+      typeof callback === "function" && callback();
     });
   }
 
@@ -70,87 +93,143 @@ window.addEventListener("DOMContentLoaded", (e) => {
 
   // create message element
   function addMessage(msg) {
+    // get message related data from data attributes
     const lastMessageDate = messageInput.dataset.lastMessageDate;
     const lastMessageSender = messageInput.dataset.lastMessageSender;
     const myUsername = messageInput.dataset.me;
 
+    // remove empty messages  placeholder if any
+    document.querySelector("[data-no-messages]")?.remove();
+
+    // grab message template element from html document
     const messageTemp = document
       .querySelector("[data-message-template]")
       .content.cloneNode(true);
 
+    // select essential elements from message template
     const senderImg = messageTemp.querySelector("img");
     const body = messageTemp.querySelector(".chatMessageBody");
     const messageInfo = messageTemp.querySelector(".chatMessageInfo");
     const messageTime = messageTemp.querySelector(".chatMessageTime");
     const messageStatus = messageTemp.querySelector(".chatStatus");
 
+    // add content to the selected message template
     senderImg.src += msg.profile_pic;
     body.textContent = msg.body;
     messageTime.textContent = formatDate(msg.created_at);
     messageStatus.textContent = msg.status;
 
+    // decide to add a message as a full message with user image
+    // and message info or append to the existing message group element
+    // if it was sent by the same user and less than a minute differance
     if (
       !lastMessageDate.trim() ||
       lastMessageSender !== msg.sender ||
-      !shouldCombine(msg.created_at, lastMessageDate)
+      !lessThanMinute(msg.created_at, lastMessageDate)
     ) {
+      // when we have to create a new message group
+
+      // create a new message group element
       const messageGroup = document.createElement("div");
       messageGroup.classList.add("chatMessageGroup");
       messageGroup.classList.add(
         msg.sender === myUsername.trim() ? "sent" : "recieved"
       );
+
+      // add our message element to the message group element
       messageGroup.append(
         messageTemp.querySelector(".chatMessage"),
         messageInfo
       );
+
+      // add user related info
       messageGroup.prepend(messageTemp.querySelector(".chatMessageUser"));
       chatsListContainer.appendChild(messageGroup);
     } else {
-      messageInfo.remove();
+      // when a message should be appended to existing message group
+
+      // select last message group element
       const messageGroup = chatsListContainer.querySelector(
         ".chatMessageGroup:last-of-type"
       );
 
+      // remove message info like status and time since they already exist
+      // in the message group
+      messageInfo.remove();
+
+      // Add message to the message group right before message info
       messageGroup.insertBefore(
         messageTemp.querySelector(".chatMessage"),
         messageGroup.querySelector(".chatMessageInfo")
       );
     }
 
+    // reset input field text content
+    // this may not clear input content since we are using emoji editor div
     messageInput.textContent = "";
+    // change when last message was created used to fetch new messages
+    // so that we only fetch latest messages
     messageInput.setAttribute("data-last-message-date", msg.created_at);
+    // also set the last user to send a message whitch we are about to display
     messageInput.setAttribute("data-last-message-sender", msg.sender);
+    // reset input field value
+    // // this may not clear input content since we are using emoji editor div
     messageInput.value = "";
+
+    // smoothly scroll the messages container to the bottom, so that we can see the new message
     chatsListContainer.scrollTo({
       top: chatsListContainer.scrollHeight,
       behavior: "smooth",
     });
   }
 
-  // check for new messages
-
+  // checks for newest messages
   function check_new_messages() {
+    // get the date latest message was sent or recieved
+    // or use 1970-12-31 so that we can only select messages
+    // that were sent after that date
     const lastMessageDate =
       messageInput.dataset.lastMessageDate.trim() ||
       new Date(new Date().setFullYear(1970, 12, 31)).toJSON();
+
+    // get the id of the group we are currently in if any
+    // so that we can check for messages only from that group
     const groupId = messageInput.dataset.groupId;
+
+    // get the username of a friend we are chatting with
+    // if we are not in a group, so that we can only fetch messages from
+    // him/her
     const chatFriend = messageInput.dataset.chatFriend;
 
+    // design the url to fetch newest messages
     const url = `
     ../chat/check_new_messages.php?group_id=${groupId}&sender=${chatFriend}&last_message_date=${lastMessageDate}
     `;
 
+    // send the request to fetch new messages
     request(url).then((messages) => {
+      // when messages are available loop through them
       messages.forEach((msg) => {
+        // add an individual message to the screen
         addMessage(msg);
       });
     });
   }
 
+  // run check chek_new_messages function every 3 seconds
+  // to get new messages
   setInterval(check_new_messages, 3000);
 });
 
-function shouldCombine(date1, date2) {
+
+/**
+ * Checks whether two dates has less than a minute differance
+ * 
+ * @param {string} date1 the first date
+ * @param {string} date2 another date
+ * @returns boolean
+ */
+function lessThanMinute(date1, date2) {
   const diff = (new Date(date1) - new Date(date2)) / (1000 * 60);
   // console.log({ diff });
   if (1 > diff && diff > -1) {
@@ -160,6 +239,13 @@ function shouldCombine(date1, date2) {
   return false;
 }
 
+
+/**
+ * Legacy function that formats a date into a more human readable form
+ * 
+ * @param {string} date date to format
+ * @returns string formated date
+ */
 function formatDate(date) {
   const inputDate = Date.parse(date);
   const dateNow = Date.now();
