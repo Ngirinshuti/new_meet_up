@@ -1,8 +1,6 @@
-
 // Wait until DOM content are loaded
 
 window.addEventListener("DOMContentLoaded", (e) => {
-
   // select the messages container element
   const chatsListContainer = document.querySelector(".chatMessageList");
 
@@ -29,6 +27,7 @@ window.addEventListener("DOMContentLoaded", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       sendMessage(messageInput.value);
+      clearInputs();
     }
   });
 
@@ -40,13 +39,23 @@ window.addEventListener("DOMContentLoaded", (e) => {
       // editor element created by emoji library
       messageInput.value = messageEditor.textContent;
       sendMessage();
-      // clear editor by emoji library
-      messageEditor.textContent = "";
+      clearInputs();
     }
   });
 
+  // resets message inputs
+  function clearInputs() {
+    // clear message input value
+    messageInput.value = "";
+    // clear editor text content (value) by emoji library
+    messageEditor.textContent = "";
+  }
+
   // send by clicking send button
-  sendButton.addEventListener("click", (e) => sendMessage(messageInput.value));
+  sendButton.addEventListener("click", (e) => {
+    sendMessage();
+    clearInputs();
+  });
 
   /**
    * Sends a message

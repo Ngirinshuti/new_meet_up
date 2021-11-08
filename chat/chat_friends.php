@@ -9,10 +9,14 @@ $friends = (new Friends($db_connection, $me->username))->getFriendsSorted();
 
 $validator = new Validator();
 
+$group = isset($_GET['group_add']) ? Group::findOne(intval($_GET['group_add'])) : null;
+
 $validator->methodPost(function (Validator &$validator) {
-    $validator->addData($_POST)->addRules([
+    $rules = isset($_GET['create_group']) ? [
         'name' => ['not_empty' => true],
-    ])->validate();
+    ] : [];
+
+    $validator->addData($_POST)->addRules($rules)->validate();
 
     if (!isset($_POST['members']) || !count($_POST['members'])) {
         $validator->setMainError("No members selected!")->saveMainError()
@@ -20,15 +24,45 @@ $validator->methodPost(function (Validator &$validator) {
     } else {
         $validator->isValid(function (Validator $validator) {
             $members = $_POST['members'];
-            $name = $validator->valid_data['name'];
 
-            $group = Group::create($name);
-            $group->join(Auth::currentUser()->username, "admin");
+            $group = null;
+            if (isset($_GET['group_add'])) {
+                $group = $GLOBALS['group'];
+
+                if (!$group->isAdmin(me()->username)) {
+                    $validator->setMainError("Only admin can add members!")->saveMainError()
+                        ->redirect(current_url_full());
+                }
+
+                $msg = count($members) . " new members joined '{$group->name}'.";
+            } elseif (isset($_GET['create_group'])) {
+                $name = $validator->valid_data['name'];
+                $group = Group::create($name);
+
+                $group->join(Auth::currentUser()->username, "admin");
+                $msg = "Goup {$group->name} was created with you with " . count($members) . " other(s).";
+            }
+
+            $members_count = 0;
+
             foreach ($members as $member) {
+                if (isset($_GET['group_add']) && $group->isMember($member)) {
+                    continue;
+                }
+
+                $members_count +=  1;
                 $group->join($member);
             }
-            $validator->setSuccessMsg("Goup was created successfully with " . count($members) + 1 . " members! You are admin.")
-                ->redirect(current_url());
+
+            if (isset($_GET['group_add'])) {
+                $members_count = $members_count ?: "No";
+                $msg = "$members_count member(s) joined <{$group->name}>";
+            } elseif (isset($_GET['create_group'])) {
+                $msg = "Goup {$group->name} was created with you with " . count($members) . " other(s).";
+            }
+
+            $validator->setSuccessMsg($msg)
+                ->redirect(getUrl("/chat/chat_groups.php?group={$group->id}"));
         });
     }
 
@@ -42,7 +76,16 @@ list($errors, $data, $errorClass, $mainError, $msg, $csrf) = $validator->helpers
 
 function in_members(string $username)
 {
-    return isset($_POST['members']) && in_array($username, $_POST['members'], true);
+    $validator = $GLOBALS['validator'];
+
+    $group = $GLOBALS['group'];
+    $members = (isset($_POST['members']) ? $_POST['members'] : $validator->data("members")) ?: [];
+
+    $in_selected_members = in_array($username, $members, true);
+
+    $in_group_members = $group ? $group->isMember($username) : false;
+
+    return $in_selected_members || $in_group_members;
 }
 
 ?>
@@ -67,41 +110,47 @@ function in_members(string $username)
             <header class="chatHeader">
                 <a href="<?php echo getUrl("/chat/index.php") ?>" class="btn btn-icon"><i class="fa fa-arrow-left"></i></a>
                 <h4 class="title">Friends</h4>
-                <?php if (isset($_GET['create'])) : ?>
-                    <a class="btn" href="<?php echo getUrl("/chat/chat_friends.php") ?>" data-group-create>
-                        <i class="fa fa-close"></i>
-                        Cancel Create
-                    </a>
-                <?php endif; ?>
                 <a href="<?php echo getUrl("/chat/chat_groups.php"); ?>" class="btn">Groups</a>
             </header>
             <?php echo $msg() ?>
             <?php echo $mainError(); ?>
-            <?php if (isset($_GET['create'])) : ?>
-                <div class="mainFormContainer groupFormContainer">
-                    <form id="group-create-form" action="" class="mainForm groupForm" method="POST">
-                        <?php echo $csrf(); ?>
-                        <div class="formHeader">
-                        </div>
-                        <div class="formBody">
-                            <div class="mainInput <?php echo $errorClass('name'); ?>">
-                                <label for="group_name">Group Name</label>
-                                <input value="<?php echo $data('name') ?>" placeholder="Enter group name.." type="text" name="name" id="group_name">
-                                <?php echo $errors('name') ?>
+            <div class="chatFriendsContainer">
+                <?php if (isset($_GET['create_group']) && !isset($_GET['group_add'])) : ?>
+                    <div class="mainFormContainer groupFormContainer">
+                        <form id="group-create-form" action="" class="mainForm groupForm" method="POST">
+                            <?php echo $csrf(); ?>
+                            <div class="formHeader">
                             </div>
-                            <button form="group-create-form" style="display: inline-block; margin-bottom: 2rem;" type="submit">Create</button>
-                        </div>
-                        <h4 class="formText">Choose friends to start a group</h4>
-                    </form>
-                </div>
-            <?php else : ?>
-                <div class="chatFriendsContainer">
-                    <div class="chatFriendsSearch">
+                            <div class="formBody">
+                                <div class="mainInput <?php echo $errorClass('name'); ?>">
+                                    <label for="group_name">Group Name</label>
+                                    <input value="<?php echo $data('name') ?>" placeholder="Enter group name.." type="text" name="name" id="group_name">
+                                    <?php echo $errors('name') ?>
+                                </div>
+                                <button form="group-create-form" style="display: inline-block; margin-bottom: 2rem;" type="submit">Create</button>
+                            </div>
+                            <h4 class="formText">Select friends to start a group</h4>
+                        </form>
+                    </div>
+                <?php elseif (isset($_GET['group_add'])) : ?>
+                    <div class="mainFormContainer groupFormContainer">
+                        <form id="group-create-form" action="" class="mainForm groupForm" method="POST">
+                            <?php echo $csrf(); ?>
+                            <div class="formHeader">
+                            </div>
+                            <button form="group-create-form" style="display: inline-block; margin-bottom: 2rem;" type="submit">ADD MEMBERS IN '<?php echo $group->name ?>' group</button>
+                            <h4 class="formText">Select friends to add in '<?php echo $group->name ?>' group</h4>
+                        </form>
+                    </div>
+
+
+                <?php else : ?>
+                    <!-- <div class="chatFriendsSearch">
                         <label for="search">
                             <i class="fa fa-search"></i>
                         </label>
                         <input data-friends-search-input placeholder="Search friends" type="search" name="search" id="search">
-                    </div>
+                    </div> -->
                 <?php endif ?>
 
                 <?php if (!count($friends)) : ?>
@@ -109,7 +158,7 @@ function in_members(string $username)
                 <?php endif ?>
                 <div class="chatFriendsList">
                     <?php foreach ($friends as $friend) : ?>
-                        <div class="chatFriend <?php echo isset($_GET['create']) ? "selecting" : "" ?> <?php echo $friend->status === 'online' ? 'active' : ''; ?>">
+                        <div class="chatFriend <?php echo (isset($_GET['create_group']) || isset($_GET['group_add'])) ? "selecting" : "" ?> <?php echo $friend->status === 'online' ? 'active' : ''; ?>">
                             <div class="chatUserImg">
                                 <img src="<?php echo getUrl("/images/{$friend->profile_pic}") ?>" alt="profile">
                             </div>
@@ -119,7 +168,7 @@ function in_members(string $username)
                                     last seen: <?php echo  $date_obj->dateDiffStr($friend->last_seen); ?>
                                 </div>
                             <?php endif ?>
-                            <?php if (isset($_GET['create'])) : ?>
+                            <?php if (isset($_GET['create_group']) || isset($_GET['group_add'])) : ?>
                                 <div class="chatFriendSelect">
                                     <input <?php echo in_members($friend->username) ? "checked" : ""; ?> form="group-create-form" type="checkbox" name="members[]" value="<?php echo $friend->username ?>">
                                 </div>
@@ -140,7 +189,7 @@ function in_members(string $username)
                         </div>
                     </template>
                 </div>
-                </div>
+            </div>
         </div>
 
     </div>

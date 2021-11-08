@@ -46,7 +46,7 @@ class Group implements GroupInterface
 
     public function leave(string $username): bool
     {
-        $query = "DELETE FROM `groups` WHERE `username` ? AND `group_id` = ?";
+        $query = "DELETE FROM `user_groups` WHERE `username` = ? AND `group_id` = ?";
         $stmt = DB::conn()->prepare($query);
         $success = $stmt->execute([$username, $this->id]);
 
@@ -112,5 +112,44 @@ class Group implements GroupInterface
 
         return $stmt->fetchAll();
     }
+
+    public function isAdmin(string $username):bool
+    {
+        $query = "SELECT * FROM `user_groups` 
+        WHERE `username` = ? AND `group_id` = ? AND `role` = 'admin'
+        ";
+
+        $stmt = DB::conn()->prepare($query);
+        $stmt->execute([$username, $this->id]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+
+    /**
+     * Get all groups
+     *
+     * @return array
+     */
+    public static function all():array
+    {
+        $query = "SELECT * FROM Groups";
+
+        $stmt = DB::conn()->prepare($query);
+        $stmt->setFetchMode(PDO::FETCH_CLASS, Group::class);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+
+    function delete():bool
+    {
+        $query = "DELETE FROM `groups` WHERE id = ?";
+
+        $stmt = DB::conn()->prepare($query);
+        $stmt->execute([$this->id]);
+        return $stmt->rowCount() > 0;
+    } 
 
 }

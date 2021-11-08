@@ -29,14 +29,14 @@ class Message  implements MessageInterface
         $conn = DB::conn();
         $query = "INSERT INTO `messages` 
             (`sender`, `reciever`, `body`, `story_id`, `group_id`)
-            VALUES (:sender, :reciever, :body, :story_id, :group_id)
+            VALUES (:sender, :i, :body, :story_id, :group_id)
         ";
 
         $stmt = $conn->prepare($query);
 
         $stmt->execute([
             ":sender" => $sender,
-            ":reciever" => $reciever,
+            ":i" => $reciever,
             ":body" => $body,
             ":story_id" => $story_id,
             ":group_id" => $group_id
@@ -79,35 +79,79 @@ class Message  implements MessageInterface
 
     public static function getUserRecentMessages(string $reciever): array
     {
-        $query = "SELECT 
-            IF(m.sender = :reciever, 'me', m.sender) as `from`,
-            IF(m.reciever = :reciever, 'me', m.reciever) as `to`,
+        // $query = "SELECT 
+        //     IF(m.sender = :i, 'me', m.sender) as `from`,
+        //     IF(m.reciever = :i, 'me', m.reciever) as `to`,
+        //     (
+        //         SELECT COUNT(messages.id) FROM messages WHERE status = 'unread' 
+        //         AND messages.reciever = :i
+        //         AND  messages.sender = IF(m.sender = :i, m.reciever, m.sender)
+        //     ) as unread_count,
+        //     m.*,users.profile_pic
+        //     FROM messages m 
+        //     JOIN `users` ON `users`.`username` = IF(m.sender = :i, m.reciever, m.sender)
+        //     WHERE m.date_ IN (
+        //         SELECT 
+        //         MAX(ms.date_) as `date` 
+        //         FROM messages ms
+        //         WHERE :i IN (ms.sender,ms.reciever)
+        //         AND m.sender = ms.sender
+        //         GROUP BY IF(ms.sender = :i, ms.reciever, ms.sender)
+        //         ORDER BY `date` DESC
+        //     )
+        //     GROUP BY IF(m.sender = :i, m.reciever, m.sender)
+        //     ORDER BY m.date_ DESC
+        // ";
+
+        $query = <<<STR
+            SELECT IF(m.group_id, CONCAT(m.sender, " in ", groups.name), IF(m.sender = :i, 'me', m.sender)) as `from`,
+            IF(m.reciever = :i, 'me', m.reciever) as `to`,
+            m.sender,m.reciever, m.body, m.created_at, m.group_id, groups.name as `group`,users.profile_pic,
             (
                 SELECT COUNT(messages.id) FROM messages WHERE status = 'unread' 
-                AND messages.reciever = :reciever
-                AND  messages.sender = IF(m.sender = :reciever, m.reciever, m.sender)
-            ) as unread_count,
-            m.*,users.profile_pic
+                AND messages.reciever = :i
+                AND  messages.sender = IF(m.sender = :i, m.reciever, m.sender)
+            ) as unread_count
             FROM messages m 
-            JOIN `users` ON `users`.`username` = IF(m.sender = :reciever, m.reciever, m.sender)
-            WHERE m.date_ IN (
-                SELECT 
-                MAX(ms.date_) as `date` 
-                FROM messages ms
-                WHERE :reciever IN (ms.sender,ms.reciever)
-                AND m.sender = ms.sender
-                GROUP BY IF(ms.sender = :reciever, ms.reciever, ms.sender)
-                ORDER BY `date` DESC
+            JOIN `users` ON `users`.`username` = IF(m.sender = :i, m.reciever, m.sender)
+            LEFT JOIN groups ON groups.id = m.group_id
+            WHERE (
+                :i IN (m.sender, m.reciever) OR 
+                :i IN (
+                    SELECT ug.username FROM user_groups ug WHERE ug.username = :i AND ug.group_id = m.group_id
+                )
+            ) AND
+            m.created_at IN (
+                SELECT max(ms.created_at) FROM messages ms
+                WHERE (
+                    (
+                        (ms.sender = IF(m.sender = :i, m.reciever, m.sender) AND ms.reciever = :i)
+                        OR 
+                        ( ms.sender = :i AND ms.reciever = IF(m.sender = :i, m.reciever, m.sender))
+                    )
+                    OR
+                    (
+                        IF(m.sender = :i, m.reciever, m.sender) IN (
+                            SELECT ug2.username FROM user_groups ug2 
+                            WHERE ug2.username =IF(m.sender = :i, m.reciever, m.sender) AND ug2.group_id = m.group_id
+                        ) 
+                        AND 
+                        :i IN (
+                            SELECT ug3.username FROM user_groups ug3 
+                            WHERE ug3.username = :i AND ug3.group_id = m.group_id
+                        )
+                    )
+                )
             )
-            GROUP BY IF(m.sender = :reciever, m.reciever, m.sender)
-            ORDER BY m.date_ DESC
-        ";
+            GROUP BY IF(m.group_id, groups.name, IF(m.sender = :i, m.reciever, m.sender))
+            ORDER BY m.created_at DESC
+            STR;
 
 
         $stmt = DB::conn()->prepare($query);
 
         $stmt->setFetchMode(PDO::FETCH_CLASS, __CLASS__);
-        $stmt->execute([":reciever" => $reciever]);
+        $stmt->execute([":i" => $reciever]);
 
         return $stmt->fetchAll();
     }
@@ -199,7 +243,7 @@ class Message  implements MessageInterface
         JOIN `users` ON `users`.username = `messages`.sender 
 
         WHERE messages.`created_at` > :latest_date AND (
-            messages.reciever = :reciever 
+            messages.reciever = :i 
             OR 
             (:group_id IN (
                 SELECT user_groups.`group_id` FROM  `user_groups` WHERE user_groups.group_id = messages.group_id
@@ -212,7 +256,7 @@ class Message  implements MessageInterface
         $stmt = DB::conn()->prepare($query);
         $stmt->setFetchMode(PDO::FETCH_CLASS, Message::class);
         $stmt->execute([
-            ":reciever" => $reciever, 
+            ":i" => $reciever,
             ":latest_date" => $lastMessageDate,
             ":group_id" => $group_id,
             ":sender" => $sender
@@ -221,3 +265,46 @@ class Message  implements MessageInterface
         return $stmt->fetchAll();
     }
 }
+
+
+
+
+// MY QUERY
+
+// SELECT 
+//             IF(m.group_id, groups.name, IF(m.sender = 'enzo', m.reciever, m.sender)) as `from`,
+//             m.sender,m.reciever, m.body, m.created_at, m.group_id, groups.name as `group`,users.profile_pic,
+//             IF(m.sender = 'enzo', m.reciever, m.sender) as ouser
+//             FROM messages m 
+//             JOIN `users` ON `users`.`username` = IF(m.sender = 'enzo', m.reciever, m.sender)
+//             LEFT JOIN groups ON groups.id = m.group_id
+//             WHERE (
+//                 'enzo' IN (m.sender, m.reciever) OR 
+//                 'enzo' IN (
+//                     SELECT ug.username FROM user_groups ug WHERE ug.username = 'enzo' AND ug.group_id = m.group_id
+//                 )
+//             ) AND
+//             m.created_at IN (
+//                 SELECT max(ms.created_at) FROM messages ms
+//                 WHERE (
+//                     (
+//                         (ms.sender = IF(m.sender = 'enzo', m.reciever, m.sender) AND ms.reciever = 'enzo')
+//                         OR 
+//                         ( ms.sender = 'enzo' AND ms.reciever = IF(m.sender = 'enzo', m.reciever, m.sender))
+//                     )
+//                     OR
+//                     (
+//                         IF(m.sender = 'enzo', m.reciever, m.sender) IN (
+//                             SELECT ug2.username FROM user_groups ug2 
+//                             WHERE ug2.username =IF(m.sender = 'enzo', m.reciever, m.sender) AND ug2.group_id = m.group_id
+//                         ) 
+//                         AND 
+//                         'enzo' IN (
+//                             SELECT ug3.username FROM user_groups ug3 
+//                             WHERE ug3.username = 'enzo' AND ug3.group_id = m.group_id
+//                         )
+//                     )
+//                 )
+//             )
+//             GROUP BY IF(m.group_id, groups.name, IF(m.sender = 'enzo', m.reciever, m.sender))
+//             ORDER BY m.created_at DESC

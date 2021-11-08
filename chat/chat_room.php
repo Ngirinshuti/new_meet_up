@@ -10,6 +10,12 @@ require_once __DIR__ . '/../lib/createEmiji.php';
 $user = isset($_GET['user']) ? User::findOne($_GET['user']) : null;
 $group = isset($_GET['group']) ? Group::findOne($_GET['group']) : null;
 
+if ($group && !$group->isMember(me()->username)) {
+    Session::set("forms.errors.msg", "You are not a member of '{$group->name}'");
+    header("Location: " . getUrl("/chat/chat_groups.php?group=".$group->id));
+    exit;
+}
+
 if ($user) {
     if ($user?->username === $me->username) {
         exit("Something! Went wrong.");

@@ -87,7 +87,7 @@ class Validator
      */
     public function getSuccessMsg(): string
     {
-        return $this->success_msg ?: Session::see("forms.sucess.msg", "");
+        return $this->success_msg ?: Session::see("forms.success.msg", "");
     }
 
     /**
@@ -110,7 +110,7 @@ class Validator
      * @param string $location
      * @return void
      */
-    public function redirect(string $location):void
+    public function redirect(string $location): void
     {
         $this->saveData();
         $this->saveErrors();
@@ -131,7 +131,7 @@ class Validator
      */
     public function saveMainError(): Validator
     {
-        Session::set("forms.msg.error", $this->main_error);
+        Session::set("forms.errors.msg", $this->main_error);
         return $this;
     }
 
@@ -142,7 +142,7 @@ class Validator
      */
     public function getMainError(): string
     {
-        return $this->main_error ?: Session::see("forms.msg.error", "");
+        return $this->main_error ?: Session::see("forms.errors.msg", "");
     }
 
     /**
@@ -281,7 +281,7 @@ class Validator
      * 
      * @return mixed
      */
-    public function data(string $field = "")
+    public function data(string $field = ""):mixed
     {
         if (Session::has("forms.data")) {
             array_merge($this->data, Session::see("forms.data", []));
@@ -327,7 +327,7 @@ class Validator
      */
     public function saveErrors(): Validator
     {
-        Session::set("forms.errors", $this->getErrors()); 
+        Session::set("forms.errors", $this->getErrors());
         return $this;
     }
 
@@ -483,14 +483,19 @@ class Validator
     {
 
         $errors = fn ($name) => $this->printErrors($name);
+
         $data = fn ($name) => $this->data($name);
+
         $errorClass = fn ($name) => $this->hasError($name) ? "error" : "";
+
         $error = $this->getMainError();
+
         $mainError = fn () => $error ? <<<ST
         <div class="formError">$error</div>
         ST : "";
+
         $success_msg = function () {
-            $msg = $this->getSuccessMsg() ? $this->getSuccessMsg() : (Session::see("forms.success.msg", ""));
+            $msg =  $this->getSuccessMsg();
 
             if (empty($msg)) {
                 $msg = isset($_REQUEST["msg"]) ? $_REQUEST["msg"] : "";
@@ -501,7 +506,14 @@ class Validator
             ST : "";
         };
 
-        return [$errors, $data, $errorClass, $mainError, $success_msg, $this->getCsrfField()];
+        return [
+            $errors, 
+            $data,
+            $errorClass,
+            $mainError,
+            $success_msg,
+            $this->getCsrfField()
+        ];
     }
 
     function getCsrfField(): Closure

@@ -25,23 +25,24 @@ if (Session::has("url.current")) {
     // if (Session::has('url.last'))
     Session::set("url.last", Session::get('url.current'));
     Session::set("url.last.full", Session::get('url.current.full'));
-} 
+}
 
 Session::set("url.current", current_url());
 Session::set("url.current.full", current_url_full());
 
-function back() {
-    if (Session::has('url.last.full')){
+function back()
+{
+    if (Session::has('url.last.full')) {
         header("Location: " . Session::get('url.last.full'));
         exit;
     }
 
-    header("Location: ". getUrl('/'));
+    header("Location: " . getUrl('/'));
     exit;
 }
 
 
-function getBackUrl():string
+function getBackUrl(): string
 {
     if (Session::has('url.last.full')) {
         return Session::get('url.last.full');
@@ -50,7 +51,24 @@ function getBackUrl():string
 }
 
 
-function me():User
+function error_msg()
+{
+    $error = Session::see("forms.errors.msg", "");
+    echo $error ? <<<ST
+    <div class="formError">$error</div>
+    ST : "";
+}
+
+function success_msg()
+{
+    $msg = Session::see("forms.success.msg", "");
+
+    echo !empty($msg) ? <<<ST
+        <div class="formMsg">$msg</div>
+    ST : "";
+}
+
+function me(): User
 {
     return $GLOBALS["me"];
 }

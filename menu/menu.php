@@ -66,7 +66,7 @@ function getActive($url)
             </a>
         </li>
         <li title="Messages">
-            <a data-tooltip="messages" class="<?php getActive(getUrl("/message")); ?>" href="<?php echo getUrl("/message"); ?>">
+            <a data-tooltip="messages" class="<?php getActive(getUrl("/chat")); ?>" href="<?php echo getUrl("/chat"); ?>">
                 <i class="fa fa-wechat"></i>
                 <?php echo ($unread > 0) ? '<span class="badge danger">' . $unread . '</span>' : ''; ?>
             </a>
